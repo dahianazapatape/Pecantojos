@@ -10,6 +10,7 @@
  * equipo sin pisar este trabajo.
  */
 const { getPool, sql } = require('../../db');
+const { getRequest } = require('../utils/transaction'); // ADR-003
 
 async function findAll({ ciudad, nombre, correo } = {}) {
   const where = [];
@@ -86,48 +87,48 @@ async function update(id, { nombre_cliente, telefono, correo, direccion, ciudad,
   return result.recordset[0] || null;
 }
 
-async function findPedidoIdsByCliente(id) {
-  const pool = await getPool();
-  const result = await pool.request()
+async function findPedidoIdsByCliente(id, tx) {
+  const request = await getRequest(tx);
+  const result = await request
     .input('id', sql.Int, id)
     .query('SELECT id FROM PEDIDOS WHERE id_cliente=@id');
   return result.recordset.map((p) => p.id);
 }
 
-async function findDetallesByPedido(pedidoId) {
-  const pool = await getPool();
-  const result = await pool.request()
+async function findDetallesByPedido(pedidoId, tx) {
+  const request = await getRequest(tx);
+  const result = await request
     .input('pid', sql.Int, pedidoId)
     .query('SELECT id_producto, cantidad FROM DETALLE_PEDIDOS WHERE id_pedido=@pid');
   return result.recordset;
 }
 
-async function incrementarStock(idProducto, cantidad) {
-  const pool = await getPool();
-  await pool.request()
+async function incrementarStock(idProducto, cantidad, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('ip', sql.Int, idProducto)
     .input('c', sql.Int, cantidad)
     .query('UPDATE INVENTARIO SET stock_actual=stock_actual+@c WHERE id_producto=@ip');
 }
 
-async function deletePagosByPedido(pedidoId) {
-  const pool = await getPool();
-  await pool.request().input('pid', sql.Int, pedidoId).query('DELETE FROM PAGO WHERE id_pedidos=@pid');
+async function deletePagosByPedido(pedidoId, tx) {
+  const request = await getRequest(tx);
+  await request.input('pid', sql.Int, pedidoId).query('DELETE FROM PAGO WHERE id_pedidos=@pid');
 }
 
-async function deleteDetallesByPedido(pedidoId) {
-  const pool = await getPool();
-  await pool.request().input('pid', sql.Int, pedidoId).query('DELETE FROM DETALLE_PEDIDOS WHERE id_pedido=@pid');
+async function deleteDetallesByPedido(pedidoId, tx) {
+  const request = await getRequest(tx);
+  await request.input('pid', sql.Int, pedidoId).query('DELETE FROM DETALLE_PEDIDOS WHERE id_pedido=@pid');
 }
 
-async function deletePedido(pedidoId) {
-  const pool = await getPool();
-  await pool.request().input('pid', sql.Int, pedidoId).query('DELETE FROM PEDIDOS WHERE id=@pid');
+async function deletePedido(pedidoId, tx) {
+  const request = await getRequest(tx);
+  await request.input('pid', sql.Int, pedidoId).query('DELETE FROM PEDIDOS WHERE id=@pid');
 }
 
-async function deleteById(id) {
-  const pool = await getPool();
-  await pool.request().input('id', sql.Int, id).query('DELETE FROM CLIENTE WHERE id=@id');
+async function deleteById(id, tx) {
+  const request = await getRequest(tx);
+  await request.input('id', sql.Int, id).query('DELETE FROM CLIENTE WHERE id=@id');
 }
 
 module.exports = {
