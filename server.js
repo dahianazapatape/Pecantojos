@@ -9,8 +9,8 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 
 // Rutas principales
-app.use('/api/clientes',    require('./routes/clientes'));
-app.use('/api/pedidos',     require('./routes/pedidos'));
+app.use('/api/clientes',    require('./src/routes/clienteRoutes'));
+app.use('/api/pedidos',     require('./src/routes/pedidoRoutes'));
 
 const { categorias, promociones, proveedores, insumos,
         inventario, pagos, compras, productos } = require('./routes/otros');
