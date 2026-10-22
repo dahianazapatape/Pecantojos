@@ -1,8 +1,8 @@
 # ADR-001: Separar la lógica de `routes/` en capas (controllers → services → repositories)
 
-**Estado:** Iniciada — módulo Clientes implementado (`src/routes|controllers|services|repositories/cliente*.js`); Pedidos y los demás recursos quedan pendientes.
+**Estado:** Implementada para los módulos Clientes y Pedidos (MVP); `server.js` ya usa las rutas en capas. Pendiente: migrar `productos`, `otros` (categorías, promociones, proveedores, insumos, inventario, pagos, compras), `reportes` y `auth`.
 **Atributo de calidad que mejora:** Mantenibilidad
-**Responsable sugerido:** *(asignar a un integrante del equipo)*
+**Responsable:** Dahiana Zapata
 
 ## Contexto
 
@@ -77,16 +77,12 @@ menos de 2 horas, sin generar regresiones en las demás rutas del sistema.
 
 ## Avance de implementación
 
-- ✅ `src/repositories/clienteRepository.js` — todas las consultas de `routes/clientes.js`
-  movidas sin cambiar su comportamiento (incluye nota `TODO(ADR-004)` sobre los filtros aún sin
-  parametrizar, para no mezclar esta decisión con la de ADR-004).
-- ✅ `src/services/clienteService.js` — reglas de negocio (validación de correo duplicado,
-  mensaje de dependencias, orquestación de la eliminación en cascada). Incluye nota
-  `TODO(ADR-003)` donde correspondería envolver la eliminación en una transacción.
-- ✅ `src/controllers/clienteController.js` — manejo de `req`/`res` y traducción de errores
-  (`HttpError`) a códigos de estado HTTP.
-- ✅ `src/routes/clienteRoutes.js` — mismas rutas y verbos que `routes/clientes.js`, delegando en
-  el controller.
-- ⏳ Falta: reemplazar el `require('./routes/clientes')` en `server.js` por
-  `require('./src/routes/clienteRoutes')` una vez validado contra la base de datos real, y migrar
-  el recurso de Pedidos siguiendo el mismo patrón.
+- ✅ **Clientes** — `src/{routes,controllers,services,repositories}/cliente*.js`.
+- ✅ **Pedidos** — `src/{routes,controllers,services,repositories}/pedido*.js`, incluyendo
+  agregar/eliminar detalle (validación de stock, descuento/devolución de inventario, recálculo del total)
+  y la eliminación en cascada. Mismos endpoints y comportamiento que `routes/pedidos.js`.
+- ✅ `server.js` monta `src/routes/clienteRoutes.js` y `src/routes/pedidoRoutes.js` en lugar de
+  `routes/clientes.js` y `routes/pedidos.js` (los archivos heredados se eliminan una vez validado).
+- ✅ Las notas `TODO(ADR-003)` y `TODO(ADR-004)` en `services/` y `repositories/` marcan dónde
+  entran las otras dos decisiones, para mantener cada ADR como un cambio independiente.
+- ⏳ Falta migrar los demás recursos (`productos`, `otros`, `reportes`, `auth`) con el mismo patrón.
