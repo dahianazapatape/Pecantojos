@@ -3,14 +3,11 @@
  * ADR-001 (docs/adr/0001-separar-en-capas.md) — lógica de negocio del módulo de
  * Clientes, separada de las rutas (HTTP) y del acceso a datos (repository).
  *
- * La eliminación en cascada (eliminar) ejecuta varios pasos de escritura sin
- * envolverlos en una transacción, igual que en el código heredado. Eso es
- * exactamente el Problema descrito en ADR-003 (docs/adr/0003-control-transaccional.md):
- * se deja así a propósito, para que ADR-003 sea una decisión e commit independiente
- * sobre este mismo método.
+ * ADR-003: la eliminación en cascada se ejecuta dentro de una transacción (ver eliminar).
  */
 const repo = require('../repositories/clienteRepository');
 const { HttpError } = require('../utils/httpError');
+const { withTransaction } = require('../utils/transaction'); // ADR-003
 
 async function listar(filtros) {
   return repo.findAll(filtros);
@@ -55,22 +52,23 @@ async function actualizar(id, datos) {
 }
 
 async function eliminar(id) {
-  // TODO(ADR-003, ver docs/adr/0003-control-transaccional.md): envolver estos pasos
-  // en una transacción (BEGIN TRANSACTION / COMMIT / ROLLBACK) para que, si uno falla
-  // a mitad de camino, no quede inventario descontado ni registros a medio borrar.
-  const pedidoIds = await repo.findPedidoIdsByCliente(id);
+  // ADR-003: toda la cascada (devolver stock, borrar pagos/detalles/pedidos y el cliente) corre
+  // en una sola transacción: si cualquier paso falla, no queda nada a medias.
+  await withTransaction(async (tx) => {
+    const pedidoIds = await repo.findPedidoIdsByCliente(id, tx);
 
-  for (const pedidoId of pedidoIds) {
-    const detalles = await repo.findDetallesByPedido(pedidoId);
-    for (const detalle of detalles) {
-      await repo.incrementarStock(detalle.id_producto, detalle.cantidad);
+    for (const pedidoId of pedidoIds) {
+      const detalles = await repo.findDetallesByPedido(pedidoId, tx);
+      for (const detalle of detalles) {
+        await repo.incrementarStock(detalle.id_producto, detalle.cantidad, tx);
+      }
+      await repo.deletePagosByPedido(pedidoId, tx);
+      await repo.deleteDetallesByPedido(pedidoId, tx);
+      await repo.deletePedido(pedidoId, tx);
     }
-    await repo.deletePagosByPedido(pedidoId);
-    await repo.deleteDetallesByPedido(pedidoId);
-    await repo.deletePedido(pedidoId);
-  }
 
-  await repo.deleteById(id);
+    await repo.deleteById(id, tx);
+  });
   return { message: 'Cliente y todos sus datos eliminados correctamente' };
 }
 

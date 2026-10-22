@@ -5,6 +5,7 @@
  * routes/pedidos.js (código heredado), sin cambiar su comportamiento.
  */
 const { getPool, sql } = require('../../db');
+const { getRequest } = require('../utils/transaction'); // ADR-003
 
 async function findAll({ estado, cliente, fecha_inicio, fecha_fin } = {}) {
   const where = [];
@@ -85,17 +86,17 @@ async function update(id, { id_cliente, fecha_pedido, fecha_entrega, estado_pedi
   return result.recordset[0] || null;
 }
 
-async function getStock(idProducto) {
-  const pool = await getPool();
-  const result = await pool.request()
+async function getStock(idProducto, tx) {
+  const request = await getRequest(tx);
+  const result = await request
     .input('id_producto', sql.Int, idProducto)
     .query('SELECT stock_actual FROM INVENTARIO WHERE id_producto=@id_producto');
   return result.recordset[0] ? result.recordset[0].stock_actual : null;
 }
 
-async function insertDetalle({ id_pedido, id_producto, cantidad, precio_unitario, subtotal }) {
-  const pool = await getPool();
-  await pool.request()
+async function insertDetalle({ id_pedido, id_producto, cantidad, precio_unitario, subtotal }, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('id_pedido', sql.Int, id_pedido)
     .input('id_producto', sql.Int, id_producto)
     .input('cantidad', sql.Int, cantidad)
@@ -105,71 +106,71 @@ async function insertDetalle({ id_pedido, id_producto, cantidad, precio_unitario
             VALUES (@id_pedido,@id_producto,@cantidad,@precio_unitario,@subtotal)`);
 }
 
-async function descontarStock(idProducto, cantidad) {
-  const pool = await getPool();
-  await pool.request()
+async function descontarStock(idProducto, cantidad, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('id_producto', sql.Int, idProducto)
     .input('cantidad', sql.Int, cantidad)
     .query(`UPDATE INVENTARIO SET stock_actual=stock_actual-@cantidad, fecha_actualizacion=GETDATE() WHERE id_producto=@id_producto`);
 }
 
-async function devolverStockConFecha(idProducto, cantidad) {
-  const pool = await getPool();
-  await pool.request()
+async function devolverStockConFecha(idProducto, cantidad, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('id_producto', sql.Int, idProducto)
     .input('cantidad', sql.Int, cantidad)
     .query(`UPDATE INVENTARIO SET stock_actual=stock_actual+@cantidad, fecha_actualizacion=GETDATE() WHERE id_producto=@id_producto`);
 }
 
-async function recalcularTotal(idPedido) {
-  const pool = await getPool();
-  await pool.request()
+async function recalcularTotal(idPedido, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('id_pedido', sql.Int, idPedido)
     .query(`UPDATE PEDIDOS SET valor_total=(SELECT ISNULL(SUM(subtotal),0) FROM DETALLE_PEDIDOS WHERE id_pedido=@id_pedido) WHERE id=@id_pedido`);
 }
 
-async function findDetalleById(detalleId) {
-  const pool = await getPool();
-  const result = await pool.request()
+async function findDetalleById(detalleId, tx) {
+  const request = await getRequest(tx);
+  const result = await request
     .input('id', sql.Int, detalleId)
     .query('SELECT * FROM DETALLE_PEDIDOS WHERE id=@id');
   return result.recordset[0] || null;
 }
 
-async function deleteDetalleById(detalleId) {
-  const pool = await getPool();
-  await pool.request().input('id', sql.Int, detalleId).query('DELETE FROM DETALLE_PEDIDOS WHERE id=@id');
+async function deleteDetalleById(detalleId, tx) {
+  const request = await getRequest(tx);
+  await request.input('id', sql.Int, detalleId).query('DELETE FROM DETALLE_PEDIDOS WHERE id=@id');
 }
 
-async function findDetallesByPedido(idPedido) {
-  const pool = await getPool();
-  const result = await pool.request()
+async function findDetallesByPedido(idPedido, tx) {
+  const request = await getRequest(tx);
+  const result = await request
     .input('id', sql.Int, idPedido)
     .query('SELECT id_producto, cantidad FROM DETALLE_PEDIDOS WHERE id_pedido=@id');
   return result.recordset;
 }
 
-async function incrementarStock(idProducto, cantidad) {
-  const pool = await getPool();
-  await pool.request()
+async function incrementarStock(idProducto, cantidad, tx) {
+  const request = await getRequest(tx);
+  await request
     .input('ip', sql.Int, idProducto)
     .input('c', sql.Int, cantidad)
     .query('UPDATE INVENTARIO SET stock_actual=stock_actual+@c WHERE id_producto=@ip');
 }
 
-async function deletePagosByPedido(idPedido) {
-  const pool = await getPool();
-  await pool.request().input('id', sql.Int, idPedido).query('DELETE FROM PAGO WHERE id_pedidos=@id');
+async function deletePagosByPedido(idPedido, tx) {
+  const request = await getRequest(tx);
+  await request.input('id', sql.Int, idPedido).query('DELETE FROM PAGO WHERE id_pedidos=@id');
 }
 
-async function deleteDetallesByPedido(idPedido) {
-  const pool = await getPool();
-  await pool.request().input('id', sql.Int, idPedido).query('DELETE FROM DETALLE_PEDIDOS WHERE id_pedido=@id');
+async function deleteDetallesByPedido(idPedido, tx) {
+  const request = await getRequest(tx);
+  await request.input('id', sql.Int, idPedido).query('DELETE FROM DETALLE_PEDIDOS WHERE id_pedido=@id');
 }
 
-async function deletePedido(idPedido) {
-  const pool = await getPool();
-  await pool.request().input('id', sql.Int, idPedido).query('DELETE FROM PEDIDOS WHERE id=@id');
+async function deletePedido(idPedido, tx) {
+  const request = await getRequest(tx);
+  await request.input('id', sql.Int, idPedido).query('DELETE FROM PEDIDOS WHERE id=@id');
 }
 
 module.exports = {
