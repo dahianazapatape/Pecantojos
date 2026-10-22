@@ -2,24 +2,27 @@
  * Service: Cliente
  * ADR-001 (docs/adr/0001-separar-en-capas.md) — lógica de negocio del módulo de
  * Clientes, separada de las rutas (HTTP) y del acceso a datos (repository).
- *
  * ADR-003: la eliminación en cascada se ejecuta dentro de una transacción (ver eliminar).
+ * ADR-005: los datos de entrada se validan antes de llegar a la base de datos.
  */
 const repo = require('../repositories/clienteRepository');
 const { HttpError } = require('../utils/httpError');
 const { withTransaction } = require('../utils/transaction'); // ADR-003
+const { validarId, validarCliente } = require('../validators/validaciones'); // ADR-005
 
 async function listar(filtros) {
   return repo.findAll(filtros);
 }
 
 async function obtenerPorId(id) {
+  validarId(id, 'id del cliente'); // ADR-005
   const cliente = await repo.findById(id);
   if (!cliente) throw new HttpError(404, 'Cliente no encontrado');
   return cliente;
 }
 
 async function obtenerDependencias(id) {
+  validarId(id, 'id del cliente'); // ADR-005
   const totalPedidos = await repo.countPedidosByCliente(id);
   return {
     pedidos: totalPedidos,
@@ -30,6 +33,7 @@ async function obtenerDependencias(id) {
 }
 
 async function crear(datos) {
+  validarCliente(datos); // ADR-005
   if (datos.correo) {
     const existentes = await repo.findByCorreo(datos.correo);
     if (existentes.length > 0) {
@@ -40,6 +44,8 @@ async function crear(datos) {
 }
 
 async function actualizar(id, datos) {
+  validarId(id, 'id del cliente'); // ADR-005
+  validarCliente(datos);           // ADR-005
   if (datos.correo) {
     const existentes = await repo.findByCorreo(datos.correo, id);
     if (existentes.length > 0) {
@@ -52,6 +58,7 @@ async function actualizar(id, datos) {
 }
 
 async function eliminar(id) {
+  validarId(id, 'id del cliente'); // ADR-005: se valida antes de abrir la transacción
   // ADR-003: toda la cascada (devolver stock, borrar pagos/detalles/pedidos y el cliente) corre
   // en una sola transacción: si cualquier paso falla, no queda nada a medias.
   await withTransaction(async (tx) => {
