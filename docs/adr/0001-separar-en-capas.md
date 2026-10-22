@@ -2,7 +2,7 @@
 
 **Estado:** Implementada para los módulos Clientes y Pedidos (MVP); `server.js` ya usa las rutas en capas. Pendiente: migrar `productos`, `otros` (categorías, promociones, proveedores, insumos, inventario, pagos, compras), `reportes` y `auth`.
 **Atributo de calidad que mejora:** Mantenibilidad
-**Responsable sugerido:** *(asignar a un integrante del equipo)*
+**Responsable:** Dahiana Zapata
 
 ## Contexto
 
