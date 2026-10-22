@@ -1,3 +1,4 @@
+require('dotenv').config(); // ADR-002: variables de entorno (.env)
 const express = require('express');
 const cors = require('cors');
 
@@ -26,7 +27,7 @@ app.use('/api/reportes', require('./routes/reportes'));
 
 app.get('/api', (req, res) => res.json({ mensaje: '🍪 PECANTOJOS API v2 corriendo' }));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

@@ -1,8 +1,8 @@
 # ADR-002: Externalizar la configuración de conexión a base de datos
 
-**Estado:** Propuesta
+**Estado:** Implementada
 **Atributo de calidad que mejora:** Portabilidad
-**Responsable sugerido:** *(asignar a un integrante del equipo)*
+**Responsable:** Sofía Carvajal
 
 ## Contexto
 
@@ -14,7 +14,7 @@ const config = {
   server: 'localhost\\SQLEXPRESS',
   database: 'PECANTOJOS',
   user: 'sa',
-  password: 'Pecantojos123',
+  password: '********',
   ...
 };
 ```
@@ -92,3 +92,15 @@ del equipo (o un entorno nuevo) sepa qué variables debe definir.
 
 La puesta en marcha del sistema en un entorno nuevo se logra editando únicamente el archivo
 `.env`, en menos de 30 minutos, sin modificar código fuente.
+
+## Avance de implementación
+
+- ✅ `src/config/dbConfig.js` — lee servidor, base, usuario, contraseña y puerto desde `process.env`
+  (dotenv). Falla al iniciar, con un mensaje claro, si falta alguna variable requerida.
+- ✅ `db.js` — ya no contiene usuario ni contraseña; usa `src/config/dbConfig.js`.
+- ✅ `.env.example` — plantilla sin valores reales (el `.env` real sigue ignorado por `.gitignore`).
+- ✅ `server.js` — carga `dotenv` y toma el puerto de `PORT`.
+- Nota técnica: con una instancia con nombre (`localhost\SQLEXPRESS`) no se define `DB_PORT`; el
+  driver resuelve el puerto por el nombre de instancia. Definir ambos produce un error de conexión.
+- ⚠️ La contraseña anterior (`********`) quedó en el historial de Git; se recomienda
+  cambiarla en SQL Server.
