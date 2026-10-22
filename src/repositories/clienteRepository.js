@@ -13,19 +13,17 @@ const { getPool, sql } = require('../../db');
 const { getRequest } = require('../utils/transaction'); // ADR-003
 
 async function findAll({ ciudad, nombre, correo } = {}) {
+  const pool = await getPool();
+  const request = pool.request();
   const where = [];
-  // TODO(ADR-004, ver docs/adr/0004-parametrizar-consultas-filtros.md): estos filtros
-  // siguen construidos por concatenación de texto (vulnerables a inyección SQL).
-  // Se movieron sin modificar para mantener ADR-001 y ADR-004 como decisiones
-  // independientes y commits separados; falta aplicar la corrección de ADR-004 aquí.
-  if (ciudad) where.push(`ciudad LIKE '%${ciudad}%'`);
-  if (nombre) where.push(`nombre_cliente LIKE '%${nombre}%'`);
-  if (correo) where.push(`correo LIKE '%${correo}%'`);
+  // ADR-004: los filtros se pasan como parámetros (@ciudad, @nombre, @correo); el texto que
+  // llega del usuario nunca se concatena dentro de la consulta SQL.
+  if (ciudad) { where.push('ciudad LIKE @ciudad'); request.input('ciudad', sql.VarChar, `%${ciudad}%`); }
+  if (nombre) { where.push('nombre_cliente LIKE @nombre'); request.input('nombre', sql.VarChar, `%${nombre}%`); }
+  if (correo) { where.push('correo LIKE @correo'); request.input('correo', sql.VarChar, `%${correo}%`); }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
-  const pool = await getPool();
-  const result = await pool.request()
-    .query(`SELECT * FROM CLIENTE ${whereClause} ORDER BY id`);
+  const result = await request.query(`SELECT * FROM CLIENTE ${whereClause} ORDER BY id`);
   return result.recordset;
 }
 

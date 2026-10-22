@@ -8,18 +8,18 @@ const { getPool, sql } = require('../../db');
 const { getRequest } = require('../utils/transaction'); // ADR-003
 
 async function findAll({ estado, cliente, fecha_inicio, fecha_fin } = {}) {
+  const pool = await getPool();
+  const request = pool.request();
   const where = [];
-  // TODO(ADR-004, ver docs/adr/0004-parametrizar-consultas-filtros.md): filtros aún
-  // construidos por concatenación de texto (vulnerables a inyección SQL). Se movieron sin
-  // modificar para mantener ADR-001 y ADR-004 como decisiones y commits independientes.
-  if (estado) where.push(`p.estado_pedido='${estado}'`);
-  if (cliente) where.push(`c.nombre_cliente LIKE '%${cliente}%'`);
-  if (fecha_inicio) where.push(`p.fecha_pedido>='${fecha_inicio}'`);
-  if (fecha_fin) where.push(`p.fecha_pedido<='${fecha_fin}'`);
+  // ADR-004: filtros como parámetros; nada del texto del usuario se concatena en el SQL.
+  // Las fechas se envían como texto y SQL Server las convierte, igual que antes con el literal.
+  if (estado) { where.push('p.estado_pedido=@estado'); request.input('estado', sql.VarChar, estado); }
+  if (cliente) { where.push('c.nombre_cliente LIKE @cliente'); request.input('cliente', sql.VarChar, `%${cliente}%`); }
+  if (fecha_inicio) { where.push('p.fecha_pedido>=@fecha_inicio'); request.input('fecha_inicio', sql.VarChar, fecha_inicio); }
+  if (fecha_fin) { where.push('p.fecha_pedido<=@fecha_fin'); request.input('fecha_fin', sql.VarChar, fecha_fin); }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
-  const pool = await getPool();
-  const result = await pool.request().query(`
+  const result = await request.query(`
     SELECT p.*, c.nombre_cliente, c.telefono as tel_cliente
     FROM PEDIDOS p LEFT JOIN CLIENTE c ON p.id_cliente=c.id
     ${whereClause} ORDER BY p.fecha_pedido DESC`);

@@ -1,6 +1,13 @@
 const express = require('express');
 const { getPool, sql } = require('../db');
 
+// ADR-004: aplica los filtros de búsqueda como parámetros SQL (@nombre, @estado, ...) en vez de
+// concatenar el texto que llega en req.query dentro de la consulta.
+function aplicarParametros(request, params) {
+  for (const [nombre, valor] of Object.entries(params)) request.input(nombre, sql.VarChar, valor);
+  return request;
+}
+
 // ===== CATEGORIAS =====
 const categorias = express.Router();
 categorias.get('/', async (req, res) => {
@@ -25,8 +32,8 @@ categorias.delete('/:id', async (req, res) => {
 const promociones = express.Router();
 promociones.get('/', async (req, res) => {
   const { estado } = req.query;
-  const where = estado ? `WHERE estado_promocion='${estado}'` : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT * FROM PROMOCIONES ${where} ORDER BY id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  const where = estado ? 'WHERE estado_promocion=@estado' : '';
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), estado ? { estado } : {}).query(`SELECT * FROM PROMOCIONES ${where} ORDER BY id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 promociones.get('/:id', async (req, res) => {
   try { const p=await getPool(); const r=await p.request().input('id',sql.Int,req.params.id).query('SELECT * FROM PROMOCIONES WHERE id=@id'); if(!r.recordset[0]) return res.status(404).json({error:'No encontrada'}); res.json(r.recordset[0]); } catch(e){ res.status(500).json({error:e.message}); }
@@ -67,11 +74,11 @@ proveedores.delete('/:id', async (req, res) => {
 const insumos = express.Router();
 insumos.get('/', async (req, res) => {
   const { nombre, proveedor } = req.query;
-  let where = [];
-  if (nombre) where.push(`i.nombre_insumo LIKE '%${nombre}%'`);
-  if (proveedor) where.push(`pr.nombre_proveedor LIKE '%${proveedor}%'`);
+  let where = []; const params = {};
+  if (nombre) { where.push('i.nombre_insumo LIKE @nombre'); params.nombre = `%${nombre}%`; }
+  if (proveedor) { where.push('pr.nombre_proveedor LIKE @proveedor'); params.proveedor = `%${proveedor}%`; }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT i.*,pr.nombre_proveedor FROM INSUMOS i LEFT JOIN PROVEEDORES pr ON i.id_proveedor=pr.id ${whereClause} ORDER BY i.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), params).query(`SELECT i.*,pr.nombre_proveedor FROM INSUMOS i LEFT JOIN PROVEEDORES pr ON i.id_proveedor=pr.id ${whereClause} ORDER BY i.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 insumos.get('/:id', async (req, res) => {
   try { const p=await getPool(); const r=await p.request().input('id',sql.Int,req.params.id).query('SELECT i.*,pr.nombre_proveedor FROM INSUMOS i LEFT JOIN PROVEEDORES pr ON i.id_proveedor=pr.id WHERE i.id=@id'); if(!r.recordset[0]) return res.status(404).json({error:'No encontrado'}); res.json(r.recordset[0]); } catch(e){ res.status(500).json({error:e.message}); }
@@ -92,8 +99,8 @@ insumos.delete('/:id', async (req, res) => {
 const inventario = express.Router();
 inventario.get('/', async (req, res) => {
   const { producto } = req.query;
-  const where = producto ? `WHERE pr.nombre_producto LIKE '%${producto}%'` : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT i.*,pr.nombre_producto FROM INVENTARIO i LEFT JOIN PRODUCTO pr ON i.id_producto=pr.id ${where} ORDER BY i.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  const where = producto ? 'WHERE pr.nombre_producto LIKE @producto' : '';
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), producto ? { producto: `%${producto}%` } : {}).query(`SELECT i.*,pr.nombre_producto FROM INVENTARIO i LEFT JOIN PRODUCTO pr ON i.id_producto=pr.id ${where} ORDER BY i.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 inventario.post('/', async (req, res) => {
   const {id_producto,stock_actual,stock_agregado,fecha_actualizacion}=req.body;
@@ -130,11 +137,11 @@ inventario.delete('/:id', async (req, res) => {
 const pagos = express.Router();
 pagos.get('/', async (req, res) => {
   const { estado, metodo } = req.query;
-  let where = [];
-  if (estado) where.push(`pg.estado='${estado}'`);
-  if (metodo) where.push(`pg.metodo_pago='${metodo}'`);
+  let where = []; const params = {};
+  if (estado) { where.push('pg.estado=@estado'); params.estado = estado; }
+  if (metodo) { where.push('pg.metodo_pago=@metodo'); params.metodo = metodo; }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT pg.*,pd.estado_pedido,c.nombre_cliente FROM PAGO pg LEFT JOIN PEDIDOS pd ON pg.id_pedidos=pd.id LEFT JOIN CLIENTE c ON pd.id_cliente=c.id ${whereClause} ORDER BY pg.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), params).query(`SELECT pg.*,pd.estado_pedido,c.nombre_cliente FROM PAGO pg LEFT JOIN PEDIDOS pd ON pg.id_pedidos=pd.id LEFT JOIN CLIENTE c ON pd.id_cliente=c.id ${whereClause} ORDER BY pg.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 pagos.post('/', async (req, res) => {
   const {id_pedidos,metodo_pago,valor_pagado,fecha_pago,estado}=req.body;
@@ -152,11 +159,11 @@ pagos.delete('/:id', async (req, res) => {
 const compras = express.Router();
 compras.get('/', async (req, res) => {
   const { estado, proveedor } = req.query;
-  let where = [];
-  if (estado) where.push(`c.estado_pago='${estado}'`);
-  if (proveedor) where.push(`pr.nombre_proveedor LIKE '%${proveedor}%'`);
+  let where = []; const params = {};
+  if (estado) { where.push('c.estado_pago=@estado'); params.estado = estado; }
+  if (proveedor) { where.push('pr.nombre_proveedor LIKE @proveedor'); params.proveedor = `%${proveedor}%`; }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT c.*,pr.nombre_proveedor FROM COMPRA_INSUMOS c LEFT JOIN PROVEEDORES pr ON c.id_proveedor=pr.id ${whereClause} ORDER BY c.fecha_compra DESC`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), params).query(`SELECT c.*,pr.nombre_proveedor FROM COMPRA_INSUMOS c LEFT JOIN PROVEEDORES pr ON c.id_proveedor=pr.id ${whereClause} ORDER BY c.fecha_compra DESC`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 compras.get('/:id', async (req, res) => {
   try {
@@ -230,12 +237,12 @@ compras.delete('/:id', async (req, res) => {
 const productos = express.Router();
 productos.get('/', async (req, res) => {
   const { nombre, categoria, disponibilidad } = req.query;
-  let where = [];
-  if (nombre) where.push(`p.nombre_producto LIKE '%${nombre}%'`);
-  if (categoria) where.push(`c.nombre_categoria LIKE '%${categoria}%'`);
-  if (disponibilidad) where.push(`p.disponibilidad='${disponibilidad}'`);
+  let where = []; const params = {};
+  if (nombre) { where.push('p.nombre_producto LIKE @nombre'); params.nombre = `%${nombre}%`; }
+  if (categoria) { where.push('c.nombre_categoria LIKE @categoria'); params.categoria = `%${categoria}%`; }
+  if (disponibilidad) { where.push('p.disponibilidad=@disponibilidad'); params.disponibilidad = disponibilidad; }
   const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  try { const p=await getPool(); const r=await p.request().query(`SELECT p.*,c.nombre_categoria,pr.nombre_promocion FROM PRODUCTO p LEFT JOIN CATEGORIA c ON p.id_categoria=c.id LEFT JOIN PROMOCIONES pr ON p.id_promociones=pr.id ${whereClause} ORDER BY p.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
+  try { const p=await getPool(); const r=await aplicarParametros(p.request(), params).query(`SELECT p.*,c.nombre_categoria,pr.nombre_promocion FROM PRODUCTO p LEFT JOIN CATEGORIA c ON p.id_categoria=c.id LEFT JOIN PROMOCIONES pr ON p.id_promociones=pr.id ${whereClause} ORDER BY p.id`); res.json(r.recordset); } catch(e){ res.status(500).json({error:e.message}); }
 });
 productos.get('/:id', async (req, res) => {
   try { const p=await getPool(); const r=await p.request().input('id',sql.Int,req.params.id).query('SELECT p.*,c.nombre_categoria,pr.nombre_promocion FROM PRODUCTO p LEFT JOIN CATEGORIA c ON p.id_categoria=c.id LEFT JOIN PROMOCIONES pr ON p.id_promociones=pr.id WHERE p.id=@id'); if(!r.recordset[0]) return res.status(404).json({error:'No encontrado'}); res.json(r.recordset[0]); } catch(e){ res.status(500).json({error:e.message}); }
