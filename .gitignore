@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+package-lock.json.bak
+
+# Variables de entorno y credenciales
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cobertura de pruebas
+coverage/
+.nyc_output/
+
+# Build / temporales
+dist/
+build/
+tmp/
+*.tmp
+
+# Diagramas: mantener fuente editable, ignorar exportaciones temporales de la herramienta
+docs/diagramas/*.bkp
