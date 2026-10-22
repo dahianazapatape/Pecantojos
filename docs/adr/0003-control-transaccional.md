@@ -1,8 +1,8 @@
 # ADR-003: Introducir control transaccional en operaciones críticas
 
-**Estado:** Propuesta
+**Estado:** Implementada para las operaciones críticas de Clientes y Pedidos
 **Atributo de calidad que mejora:** Confiabilidad
-**Responsable sugerido:** *(asignar a un integrante del equipo)*
+**Responsable:** Valentina
 
 ## Contexto
 
@@ -87,3 +87,18 @@ El mismo patrón se aplica a la eliminación en cascada de pedidos y de clientes
 Ante una falla simulada durante el registro de un pedido, se registran 0 casos de
 inconsistencia entre pedidos e inventario; toda operación incompleta se revierte
 automáticamente (rollback) en menos de 3 segundos.
+
+## Avance de implementación
+
+- ✅ `src/utils/transaction.js` — `withTransaction(work)` (BEGIN → COMMIT, o ROLLBACK si hay error) y
+  `getRequest(tx)` (los repositories usan la transacción si se les pasa, o el pool normal si no).
+- ✅ Repositories (`clienteRepository.js`, `pedidoRepository.js`) — las funciones de escritura y de
+  lectura previas a una escritura reciben un parámetro opcional `tx`.
+- ✅ `clienteService.eliminar` — la cascada completa (devolver stock, borrar pagos, detalles,
+  pedidos y cliente) corre en una transacción.
+- ✅ `pedidoService.agregarDetalle`, `eliminarDetalle` y `eliminar` — cada uno corre en una
+  transacción; si falla un paso (incluida la validación de stock) no queda nada a medias.
+- ✅ `tests/transacciones.test.js` — 6 pruebas con una base de datos simulada que verifican COMMIT
+  cuando todo sale bien y ROLLBACK (sin COMMIT) cuando un paso falla. Se ejecutan con `npm test`.
+- ⏳ Las pruebas usan una base simulada; falta validar el rollback contra SQL Server real
+  (por ejemplo, provocando un error a mitad de la cascada).
