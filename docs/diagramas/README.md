@@ -1,32 +1,52 @@
-# Diagramas C4 — Pecantojos
+# Diagramas — Pecantojos
 
-Diagramas del modelo C4 de la arquitectura **objetivo** (post-refactorización) del módulo de
-Pedidos y Clientes, según lo decidido en los ADR (`docs/adr/`) y documentado en
-`docs/arquitectura.md`.
+Aquí están los diagramas del módulo de **Pedidos y Clientes** tal como quedó después de la
+re-arquitectura. Reflejan el código que hay hoy en `src/` y lo que se explica en
+[`docs/arquitectura.md`](../arquitectura.md).
 
-| Nivel | Archivo | Qué muestra |
-|-------|---------|-------------|
-| 1 — Contexto | [`1_c4_contexto.png`](1_c4_contexto.png) | Quién usa el sistema (Encargado del negocio) y con qué otro sistema interactúa (SQL Server). |
-| 2 — Contenedores | [`2_c4_contenedores.png`](2_c4_contenedores.png) | Los bloques desplegables del sistema: Frontend Web, Backend API (Node.js + Express), sus piezas transversales (`config/`, `middleware/`) y la base de datos SQL Server. |
-| 3 — Componentes | [`3_c4_componentes.png`](3_c4_componentes.png) | La estructura interna en capas del Backend API: `routes → controllers → services → repositories`, más `middleware/`, `config/` y `models/`. |
+Todos se hicieron en Lucidchart, en un mismo documento con una página por diagrama:
+https://lucid.app/lucidchart/8f597297-0546-4bd8-9de5-e2fae9d2facf/edit?invitationId=inv_52a9cd85-d435-4f74-8687-7a15eefbdbca
 
-## Cómo leerlos
+## Modelo C4
 
-- Las etiquetas **ADR-00X** dentro de cada componente (nivel 3) señalan qué decisión de
-  `docs/adr/` introduce o modifica ese componente:
-  - **ADR-001** (mantenibilidad) — crea `controllers/`, `services/` y `repositories/`.
-  - **ADR-002** (portabilidad) — crea `config/`, que lee la conexión desde `.env`.
-  - **ADR-003** (confiabilidad) — agrega control transaccional dentro de `services/`.
-  - **ADR-004** (seguridad) — parametriza las consultas dentro de `repositories/`.
-- Estos diagramas representan la arquitectura **objetivo**, es decir, cómo debería verse el
-  sistema una vez aplicados los 4 ADR — no el estado actual del código heredado (`routes/`,
-  `db.js` en la raíz del proyecto), que todavía mezcla estas responsabilidades en un solo
-  archivo por recurso.
+El modelo C4 muestra el sistema en tres niveles de detalle, como si se hiciera zoom.
 
-## Cómo se generaron
+| Diagrama | Qué muestra |
+|----------|-------------|
+| [1. Contexto]| Quién usa el sistema y con qué se conecta. El módulo de Pedidos y Clientes aparece resaltado; los módulos que todavía no se reorganizaron, en gris. |
+| [2. Contenedores]| Las piezas que se ejecutan: la página web, la API, la base de datos y el archivo `.env`, donde se guardan los datos de conexión. |
+| [3. Componentes]| Cómo está organizada la API por dentro: cada petición pasa por rutas, controladores, servicios y repositorios hasta llegar a la base de datos. |
 
-Los PNG se generaron con un script de Python (`matplotlib`) siguiendo la notación estándar de
-[C4 Model](https://c4model.com/) (persona, sistema, contenedor, componente, base de datos). El
-script no se incluye en este repositorio porque no es parte del código de la aplicación; si se
-necesita volver a generarlos o editarlos, puede rehacerse con cualquier herramienta de
-diagramación (draw.io, Structurizr, Mermaid, etc.) siguiendo el mismo contenido.
+## Otras vistas
+
+| Diagrama | Qué muestra |
+|----------|-------------|
+| [4. Vista lógica] | Las capas del sistema (presentación, entrada, negocio y datos) y qué hace cada una. |
+| [5. Despliegue] | Dónde corre el sistema hoy: todo en un solo computador del negocio, sin servidores en la nube. |
+| [6. Secuencia]| Paso a paso de lo que pasa cuando se agrega un producto a un pedido: primero se validan los datos y luego todo se guarda en una sola transacción. |
+
+## Cómo leer los diagramas
+
+Cada caja indica la carpeta del proyecto a la que corresponde y la decisión de arquitectura
+(ADR) que la originó:
+
+- **ADR-001:** el código se separó en capas para que sea más fácil de mantener.
+- **ADR-002:** los datos de conexión a la base salen del archivo `.env`, no del código.
+- **ADR-003:** las operaciones de varios pasos se guardan completas o no se guardan.
+- **ADR-004:** las búsquedas usan consultas parametrizadas para evitar inyección SQL.
+- **ADR-005:** los datos se revisan antes de llegar a la base de datos.
+
+El borde naranja señala la pieza principal de cada diagrama.
+
+## Cómo actualizarlos
+
+Edita el diagrama en Lucidchart y exporta esa página con **Archivo → Exportar → PNG**.
+Guárdala en esta carpeta con el mismo nombre para reemplazar la imagen anterior.
+
+
+## Historial
+
+- **Semana 13:** se presentaron los diagramas de la arquitectura propuesta. Incluían las
+  carpetas `middleware/` y `models/`, que al final no se usaron.
+- **Semana 15:** se reemplazaron por la versión final, que coincide con el código real, y se
+  agregaron la vista lógica, el despliegue y la secuencia.
