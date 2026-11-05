@@ -27,6 +27,10 @@ app.use('/api/reportes', require('./routes/reportes'));
 
 app.get('/api', (req, res) => res.json({ mensaje: '🍪 PECANTOJOS API v2 corriendo' }));
 
+ // Documentación de la API (Swagger UI) en http://localhost:3000/api-docs
+ const swaggerUi = require('swagger-ui-express');
+ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(require('./docs/api/openapi.json')));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);

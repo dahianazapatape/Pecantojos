@@ -1,0 +1,1262 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Pecantojos — Módulo de Pedidos y Clientes",
+    "version": "2.0.0",
+    "description": "API REST del módulo MVP refactorizado en capas (ADR-001 a ADR-005). Los errores de negocio responden `{\"error\": \"mensaje\"}` con código 400 o 404."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Clientes"
+    },
+    {
+      "name": "Pedidos"
+    },
+    {
+      "name": "Autenticación"
+    }
+  ],
+  "paths": {
+    "/clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listar clientes",
+        "description": "Filtros opcionales, siempre parametrizados (ADR-004).",
+        "parameters": [
+          {
+            "name": "ciudad",
+            "in": "query",
+            "required": false,
+            "description": "Ciudad (contiene)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Medellín"
+          },
+          {
+            "name": "nombre",
+            "in": "query",
+            "required": false,
+            "description": "Nombre (contiene)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Ana"
+          },
+          {
+            "name": "correo",
+            "in": "query",
+            "required": false,
+            "description": "Correo (contiene)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "gmail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de clientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Cliente"
+                  }
+                },
+                "example": [
+                  {
+                    "id": 21,
+                    "nombre_cliente": "Ana Pérez",
+                    "telefono": "3001234567",
+                    "correo": "ana.perez@gmail.com",
+                    "direccion": "Cra 50 #20-10",
+                    "ciudad": "Medellín",
+                    "fecha_registro": "2026-11-04"
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Crear cliente",
+        "description": "Valida nombre, correo y teléfono (ADR-005) y que el correo no esté repetido.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEntrada"
+              },
+              "example": {
+                "nombre_cliente": "Ana Pérez",
+                "telefono": "3001234567",
+                "correo": "ana.perez@gmail.com",
+                "direccion": "Cra 50 #20-10",
+                "ciudad": "Medellín"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cliente creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                },
+                "example": {
+                  "id": 21,
+                  "nombre_cliente": "Ana Pérez",
+                  "telefono": "3001234567",
+                  "correo": "ana.perez@gmail.com",
+                  "direccion": "Cra 50 #20-10",
+                  "ciudad": "Medellín",
+                  "fecha_registro": "2026-11-04"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientes/{id}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Obtener un cliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                },
+                "example": {
+                  "id": 21,
+                  "nombre_cliente": "Ana Pérez",
+                  "telefono": "3001234567",
+                  "correo": "ana.perez@gmail.com",
+                  "direccion": "Cra 50 #20-10",
+                  "ciudad": "Medellín",
+                  "fecha_registro": "2026-11-04"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Cliente no encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Actualizar un cliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEntrada"
+              },
+              "example": {
+                "nombre_cliente": "Ana Pérez",
+                "telefono": "3001234567",
+                "correo": "ana.perez@gmail.com",
+                "direccion": "Cra 50 #20-10",
+                "ciudad": "Medellín"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cliente"
+                },
+                "example": {
+                  "id": 21,
+                  "nombre_cliente": "Ana Pérez",
+                  "telefono": "3001234567",
+                  "correo": "ana.perez@gmail.com",
+                  "direccion": "Cra 50 #20-10",
+                  "ciudad": "Medellín",
+                  "fecha_registro": "2026-11-04"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Cliente no encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Eliminar un cliente en cascada",
+        "description": "Devuelve el stock y borra pagos, detalles, pedidos y el cliente en una sola transacción (ADR-003).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Cliente y todos sus datos eliminados correctamente"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientes/{id}/dependencias": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Ver qué se borra si se elimina el cliente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dependencias",
+            "content": {
+              "application/json": {
+                "example": {
+                  "pedidos": 1,
+                  "mensaje": "Este cliente tiene 1 pedido(s) asociado(s). Al eliminarlo se eliminarán también sus pedidos, detalles y pagos."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Listar pedidos",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "description": "Estado exacto",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Pendiente"
+          },
+          {
+            "name": "cliente",
+            "in": "query",
+            "required": false,
+            "description": "Nombre del cliente (contiene)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Laura"
+          },
+          {
+            "name": "fecha_inicio",
+            "in": "query",
+            "required": false,
+            "description": "Desde (AAAA-MM-DD)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-04-01"
+          },
+          {
+            "name": "fecha_fin",
+            "in": "query",
+            "required": false,
+            "description": "Hasta (AAAA-MM-DD)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-04-30"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pedido"
+                  }
+                },
+                "example": [
+                  {
+                    "id": 11,
+                    "id_cliente": 1,
+                    "fecha_pedido": "2026-11-04",
+                    "fecha_entrega": "2026-11-06",
+                    "estado_pedido": "Pendiente",
+                    "valor_total": 0,
+                    "nombre_cliente": "María Fernanda Gómez",
+                    "tel_cliente": "3005678123"
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Crear pedido",
+        "description": "id_cliente obligatorio; la fecha de entrega no puede ser anterior a la del pedido (ADR-005).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoEntrada"
+              },
+              "example": {
+                "id_cliente": 1,
+                "fecha_entrega": "2026-11-06",
+                "estado_pedido": "Pendiente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pedido"
+                },
+                "example": {
+                  "id": 11,
+                  "id_cliente": 1,
+                  "fecha_pedido": "2026-11-04",
+                  "fecha_entrega": "2026-11-06",
+                  "estado_pedido": "Pendiente",
+                  "valor_total": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos/{id}": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Obtener un pedido con su detalle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido y detalle",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 11,
+                  "id_cliente": 1,
+                  "fecha_pedido": "2026-11-04",
+                  "fecha_entrega": "2026-11-06",
+                  "estado_pedido": "Pendiente",
+                  "valor_total": 0,
+                  "nombre_cliente": "Laura Sofía Ramírez",
+                  "detalle": [
+                    {
+                      "id": 2,
+                      "id_pedido": 2,
+                      "id_producto": 2,
+                      "cantidad": 15,
+                      "precio_unitario": 6000,
+                      "subtotal": 90000,
+                      "nombre_producto": "Galleta Red Velvet"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pedido no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Pedido no encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Actualizar un pedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoEntrada"
+              },
+              "example": {
+                "id_cliente": 1,
+                "fecha_entrega": "2026-11-06",
+                "estado_pedido": "Entregado"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pedido"
+                },
+                "example": {
+                  "id": 11,
+                  "id_cliente": 1,
+                  "fecha_pedido": "2026-11-04",
+                  "fecha_entrega": "2026-11-06",
+                  "estado_pedido": "Entregado",
+                  "valor_total": 0
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pedido no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Pedido no encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Eliminar un pedido en cascada",
+        "description": "Devuelve el stock y borra pagos, detalles y el pedido en una transacción (ADR-003).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Pedido eliminado y stock devuelto correctamente"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos/{id}/dependencias": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Ver qué se borra si se elimina el pedido",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dependencias",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detalles": 1,
+                  "pagos": 1,
+                  "mensaje": "Este pedido tiene 1 producto(s) y 1 pago(s). Al eliminarlo se devolverá el stock al inventario."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos/{id}/detalle": {
+      "post": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Agregar un producto al pedido",
+        "description": "Flujo principal: valida (ADR-005) y, en una transacción (ADR-003), inserta el detalle, descuenta el stock y recalcula el total.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetalleEntrada"
+              },
+              "example": {
+                "id_producto": 1,
+                "cantidad": 2,
+                "precio_unitario": 6000
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto agregado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Producto agregado y stock actualizado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dato inválido o stock insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Stock insuficiente. Disponible: 20"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pedidos/{id}/detalle/{detalleId}": {
+      "delete": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Quitar un producto del pedido",
+        "description": "Borra el detalle, devuelve el stock y recalcula el total en una transacción (ADR-003).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del recurso",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          },
+          {
+            "name": "detalleId",
+            "in": "path",
+            "required": true,
+            "description": "Id del detalle",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto quitado",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Producto eliminado y stock devuelto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos (ADR-005)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos inválidos: el nombre del cliente es obligatorio"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Detalle no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Detalle no encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error del servidor o de la base de datos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Failed to connect to localhost:1433"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticación"
+        ],
+        "summary": "Iniciar sesión",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "usuario": "admin1",
+                "password": "********"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión iniciada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "ok": true,
+                  "admin": {
+                    "id": 1,
+                    "usuario": "admin1",
+                    "nombre": "Administrador Principal"
+                  },
+                  "token": "<token>"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales incorrectas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Usuario o contraseña incorrectos"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "ClienteEntrada": {
+        "type": "object",
+        "required": [
+          "nombre_cliente"
+        ],
+        "properties": {
+          "nombre_cliente": {
+            "type": "string"
+          },
+          "telefono": {
+            "type": "string",
+            "description": "7 a 20 caracteres: números, espacios, guiones y +"
+          },
+          "correo": {
+            "type": "string",
+            "format": "email"
+          },
+          "direccion": {
+            "type": "string"
+          },
+          "ciudad": {
+            "type": "string"
+          },
+          "fecha_registro": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Cliente": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/ClienteEntrada"
+          }
+        ]
+      },
+      "PedidoEntrada": {
+        "type": "object",
+        "required": [
+          "id_cliente"
+        ],
+        "properties": {
+          "id_cliente": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "fecha_pedido": {
+            "type": "string",
+            "format": "date"
+          },
+          "fecha_entrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "estado_pedido": {
+            "type": "string",
+            "example": "Pendiente"
+          },
+          "valor_total": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "Pedido": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/PedidoEntrada"
+          }
+        ]
+      },
+      "DetalleEntrada": {
+        "type": "object",
+        "required": [
+          "id_producto",
+          "cantidad",
+          "precio_unitario"
+        ],
+        "properties": {
+          "id_producto": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cantidad": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "precio_unitario": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}
