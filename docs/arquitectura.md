@@ -105,19 +105,23 @@ impacto, se prioriza para implementarse junto con el ADR-001
 
 ## 7. Diagramas
 
-Diagramas C4 de la arquitectura **objetivo** (post-refactorización), en
+Los diagramas muestran la arquitectura **tal como quedó implementada** y están en
 [`docs/diagramas/`](diagramas/):
 
-- [Nivel 1 — Contexto](diagramas/1_c4_contexto.png): el Encargado del negocio y el único
-  sistema externo (SQL Server).
-- [Nivel 2 — Contenedores](diagramas/2_c4_contenedores.png): Frontend Web, Backend API
-  (Node.js + Express), los contenedores internos transversales `config/` y `middleware/`, y la
-  base de datos.
-- [Nivel 3 — Componentes](diagramas/3_c4_componentes.png): la estructura en capas interna del
-  Backend API (`routes → controllers → services → repositories`), con cada componente marcado
-  según el ADR que lo introduce o modifica.
+- [Nivel 1 — Contexto](diagramas/1_c4_contexto.webp): el administrador del negocio, el sistema
+  Pecantojos y SQL Server.
+- [Nivel 2 — Contenedores](diagramas/2_c4_contenedores.webp): el frontend web, la API
+  (Node.js + Express), el archivo `.env` y la base de datos.
+- [Nivel 3 — Componentes](diagramas/3_c4_componentes.webp): las capas de la API
+  (`routes → controllers → services → repositories`), con los validadores, las transacciones y
+  la configuración, cada uno marcado con su ADR.
+- [Vista lógica](diagramas/4_vista_logica.webp): las capas de presentación, entrada, negocio y
+  datos.
+- [Despliegue](diagramas/5_despliegue.webp): todo corre en un solo computador del negocio.
+- [Secuencia](diagramas/6_secuencia_agregar_detalle.webp): cómo se agrega un producto a un
+  pedido, desde la validación hasta el COMMIT.
 
-Ver también [`docs/diagramas/README.md`](diagramas/README.md) para la guía de lectura completa.
+La guía de lectura está en [`docs/diagramas/README.md`](diagramas/README.md).
 
 ## 8. Historial de esta plantilla
 

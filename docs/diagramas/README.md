@@ -13,17 +13,17 @@ El modelo C4 muestra el sistema en tres niveles de detalle, como si se hiciera z
 
 | Diagrama | Qué muestra |
 |----------|-------------|
-| [1. Contexto]| Quién usa el sistema y con qué se conecta. El módulo de Pedidos y Clientes aparece resaltado; los módulos que todavía no se reorganizaron, en gris. |
-| [2. Contenedores]| Las piezas que se ejecutan: la página web, la API, la base de datos y el archivo `.env`, donde se guardan los datos de conexión. |
-| [3. Componentes]| Cómo está organizada la API por dentro: cada petición pasa por rutas, controladores, servicios y repositorios hasta llegar a la base de datos. |
+| [1. Contexto](1_c4_contexto.webp) | Quién usa el sistema y con qué se conecta. El módulo de Pedidos y Clientes aparece resaltado; los módulos que todavía no se reorganizaron, en gris. |
+| [2. Contenedores](2_c4_contenedores.webp) | Las piezas que se ejecutan: la página web, la API, la base de datos y el archivo `.env`, donde se guardan los datos de conexión. |
+| [3. Componentes](3_c4_componentes.webp) | Cómo está organizada la API por dentro: cada petición pasa por rutas, controladores, servicios y repositorios hasta llegar a la base de datos. |
 
 ## Otras vistas
 
 | Diagrama | Qué muestra |
 |----------|-------------|
-| [4. Vista lógica] | Las capas del sistema (presentación, entrada, negocio y datos) y qué hace cada una. |
-| [5. Despliegue] | Dónde corre el sistema hoy: todo en un solo computador del negocio, sin servidores en la nube. |
-| [6. Secuencia]| Paso a paso de lo que pasa cuando se agrega un producto a un pedido: primero se validan los datos y luego todo se guarda en una sola transacción. |
+| [1. Contexto](1_c4_contexto.webp) | Quién usa el sistema y con qué se conecta. El módulo de Pedidos y Clientes aparece resaltado; los módulos que todavía no se reorganizaron, en gris. |
+| [2. Contenedores](2_c4_contenedores.webp) | Las piezas que se ejecutan: la página web, la API, la base de datos y el archivo `.env`, donde se guardan los datos de conexión. |
+| [3. Componentes](3_c4_componentes.webp) | Cómo está organizada la API por dentro: cada petición pasa por rutas, controladores, servicios y repositorios hasta llegar a la base de datos. |
 
 ## Cómo leer los diagramas
 
